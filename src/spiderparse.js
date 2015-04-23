@@ -38,7 +38,7 @@
                     }
 
                     //make sure there are no spaces in the attribute name and that the attribute name isn't blank
-                    if(!attr.search(/\s*/ && !attr.search(/^$/))){
+                    if(!attr.search(/\s+/ && !attr.search(/^$/))){
                         //parse attribute name
                         var assignmentOperatorLocation = attr.indexOf("=");
                         var name = assignmentOperatorLocation >= 0  ? attr.substring(0,assignmentOperatorLocation).trim() : attr;
@@ -133,13 +133,13 @@
                         return child;
                     }
                 }
-            })(htmlString, this.html.children, null, null);
+            })(htmlString, this.html.childNodes, null, null);
 
             return this.html;
         },
         html: {
             body: {},
-            children: [],
+            childNodes: [],
             docType: {
                 name: "",
                 publicId:"",
