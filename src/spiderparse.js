@@ -76,7 +76,7 @@
                     var startTagEndLocation = htmlString.substring(startTagBeginLocation).search(/\/?>/);
                     var startTagEnd = htmlString.match(/\/?>/);
                     var firstSpaceLocation = htmlString.substring(startTagBeginLocation).indexOf(" ");
-                    var tagNameEndLocation = startTagEndLocation < firstSpaceLocation ? startTagEndLocation : firstSpaceLocation;
+                    var tagNameEndLocation = startTagEndLocation < firstSpaceLocation || firstSpaceLocation < 0 ? startTagEndLocation : firstSpaceLocation;
                     var tagName = htmlString.substring(startTagBeginLocation + 1, tagNameEndLocation);
 
                     getTagAttributes(htmlString.substring(startTagBeginLocation, startTagEndLocation) + startTagEnd, child.attrs);

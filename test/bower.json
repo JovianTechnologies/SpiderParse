@@ -1,0 +1,17 @@
+{
+  "name": "test",
+  "main": "test.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/JovianTechnologies/SpiderParse",
+  "authors": [
+    "Eric Smallwood <smallwood.eric@ymail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
