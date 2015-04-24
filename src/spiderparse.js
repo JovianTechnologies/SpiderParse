@@ -38,7 +38,7 @@
                     }
 
                     //make sure there are no spaces in the attribute name and that the attribute name isn't blank
-                    if(!attr.search(/\s+/ && !attr.search(/^$/))){
+                    if(attr != "" ){
                         //parse attribute name
                         var assignmentOperatorLocation = attr.indexOf("=");
                         var name = assignmentOperatorLocation >= 0  ? attr.substring(0,assignmentOperatorLocation).trim() : attr;
@@ -64,11 +64,11 @@
 
                         if (assignmentOperatorLocation < 0) {
                             var subtag1 = tagString.substring(tagString.indexOf(attr) + attr.length);
-                            if(subtag1 != "\">" && subtag1 != "")
+                            if(subtag1.search(/^"\s*\/?>/) < 0 && subtag2 != "")
                                 getTagAttributes(subtag1, attrsList);
                         } else {
                             var subtag2 = tagString.substring(tagString.indexOf(trimmedValue) + trimmedValue.length);
-                            if(subtag2 >= "\">" && subtag2 != "")
+                            if(subtag2.search(/^"\s*\/?>/) < 0 && subtag2 != "")
                                 getTagAttributes(subtag2, attrsList);
                         }
 
