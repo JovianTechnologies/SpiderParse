@@ -1,11 +1,7 @@
-/**
- * Created by Eric on 4/23/2015.
- */
 (function(window){
+    var attributesRegex = /[^<.*\s]*\s*=\s*'\w+[^(\s+\w+\s*=\s*.*|\/?>)]*/g;
     window.SpiderParse = {
         parse: function(htmlString){
-            var self = this;
-
             var SpiderNode = function(){
                 this.attributes = [];
                 this.childNodes = [];
@@ -17,11 +13,6 @@
                 this.previousSibling = null;
             };
 
-            /**
-             * Get all attributes and thier values from a tag
-             * @param tagString
-             * @param attrsList
-             */
             function getTagAttributes(tagString, attrsList){
                 var delineatorsRegex = /\s|['"]|\s*\/?>/;
                 var attrLocation = tagString.search(delineatorsRegex);
@@ -76,12 +67,8 @@
                 }
             }
 
-            /**
-             * Recursively find all tags in the document, and their children
-             * @param htmlString
-             * @param childList
-             * @returns {*}
-             */
+            var parsedHTML = { childNodes: [] };
+
             (function getTags(htmlString, childList, parent, previousSibling){
                 var startTagBeginLocation = htmlString.indexOf("<");
                 if(startTagBeginLocation >= 0 ){
@@ -104,11 +91,11 @@
                     child.previousSibling = previousSibling;
 
                     if(child.name.search(/body/i) >= 0)
-                        self.html.body = child;
+                        parsedHTML.body = child;
                     else if(child.name.search(/head/i) >= 0)
-                        self.html.head = child;
+                        parsedHTML.head = child;
                     else if(child.name.search(/!doctype/i) >= 0){
-                        self.html.docType = child;
+                        parsedHTML.docType = child;
                     }
 
                     var endTagBeginLocation = htmlString.indexOf("</" + tagName);
@@ -133,19 +120,9 @@
                         return child;
                     }
                 }
-            })(htmlString, this.html.childNodes, null, null);
+            })(htmlString, parsedHTML.childNodes, null, null);
 
-            return this.html;
-        },
-        html: {
-            body: {},
-            childNodes: [],
-            docType: {
-                name: "",
-                publicId:"",
-                systemId:""
-            },
-            head: {}
+            return parsedHTML;
         }
     }
 })(window);
