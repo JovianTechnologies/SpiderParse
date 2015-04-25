@@ -1,5 +1,5 @@
 (function(window){
-    var attributesRegex = /[^<.*\s]*\s*=\s*'\w+[^(\s+\w+\s*=\s*.*|\/?>)]*/g;
+
     window.SpiderParse = {
         parse: function(htmlString){
             var self = this;
@@ -31,6 +31,7 @@
                     var tagNameEndLocation = startTagEndLocation < firstSpaceLocation || firstSpaceLocation < 0 ? startTagEndLocation : firstSpaceLocation;
                     var tagName = htmlString.substring(1, tagNameEndLocation);
 
+                    //todo: Throw error if tag is improper
                     self.getAttributesFromTag(htmlString.substring(0, startTagEndLocation) + startTagEnd, child.attributes);
 
                     child.name = tagName;
@@ -72,55 +73,83 @@
             return parsedHTML;
         },
         getAttributesFromTag: function(tagString, attrsList){
-            var delineatorsRegex = /\s|['"]|\s*\/?>/;
-            var attrLocation = tagString.search(delineatorsRegex);
-            if(tagString.search(/\s*"?\/?>$/) > 0 && attrLocation >= 0 && tagString != ""){
+            var attrDelineatorsRegex = /\s+[^=]|['"]|\s*\/?>/;
+            var attrLocation = tagString.search(attrDelineatorsRegex);
+            var endTagSymbolRegex = /\s*"?\/?>$/;
+
+            if(tagString.search(endTagSymbolRegex) > 0 && attrLocation >= 0 && tagString != ""){
                 tagString = tagString.substring(attrLocation + 1).trim();
 
+                var attr;
+                var assignmentOperatorLocation;
+                var attrEndLocation = tagString.search(attrDelineatorsRegex);
                 //if the delineatorRegex finds a match at the beginning of the tag then we have likely
                 //come across a string attribute
-                var attr;
-                if(tagString.search(delineatorsRegex) == 0){
-                    attr = tagString.match(/^["][^"]*["]|^['][^']*[']/)[0];
+                if(attrEndLocation == 0){
+                    var quoteAttributeRegex =/^["][^"]*["]|^['][^']*[']/;
+                    attr = tagString.match(quoteAttributeRegex)[0];
                 }else{
-                    attr = tagString.substring(0, tagString.search(delineatorsRegex));
+                    attr = tagString.substring(0, attrEndLocation);
+                    //if the attribute does not contain an equals sign check ahead to make sure there aren't multiple spaces
+                    //between it and its equal sign to make sure it is really a stand alone attribute
+                    assignmentOperatorLocation = attr.indexOf("=");
+                    if(assignmentOperatorLocation < 0 && tagString.search(/^\w+\s*=/) == 0) {
+                        attr = tagString.match(/^\w+\s*=/)[0];
+                        //reassign assignmentOperator location since the operator was found
+                        assignmentOperatorLocation = attr.indexOf("=");
+                    }
                 }
 
                 //make sure there are no spaces in the attribute name and that the attribute name isn't blank
                 if(attr != "" ){
                     //parse attribute name
-                    var assignmentOperatorLocation = attr.indexOf("=");
                     var name = assignmentOperatorLocation >= 0  ? attr.substring(0,assignmentOperatorLocation).trim() : attr;
 
+                    //remove attribute name from tagstring so that we only have to deal with the value and the remaing
+                    //attributes in the tag
+                    tagString = tagString.substring(assignmentOperatorLocation + 1).trim();
+
                     //parse attribute value
-                    tagString = tagString.substring(assignmentOperatorLocation + 1);
-                    var valueRegex = /^[^'"]*[\s\/>]|^["][^"]*["]|^['][^']*[']/;
+                    var valueRegex = /^[^'"\s]*[\s\/>]|^["][^"]*["]|^['][^']*[']/;
                     var value = assignmentOperatorLocation < 0 ? null : tagString.match(valueRegex)[0];
                     var trimmedValue = value == null ? null : value.trim();
 
                     if (trimmedValue != null) {
                         //remove any extra "'s
-                        trimmedValue = trimmedValue.replace(/^"(.*)"$/, '$1');
+                        trimmedValue = trimmedValue.replace(/^["']/, '');
+                        trimmedValue = trimmedValue.replace(/["']$/, '');
 
                         //if last character is / or > remove it
-                        if (trimmedValue.lastIndexOf("/") == trimmedValue.length - 2)
-                            trimmedValue = trimmedValue.substring(0, trimmedValue.lastIndexOf("/"));
-                        else if (trimmedValue.lastIndexOf(">") == trimmedValue.length - 1)
-                            trimmedValue = trimmedValue.substring(0, trimmedValue.lastIndexOf(">"));
+                        var lastForwardSlashLocation = trimmedValue.lastIndexOf("/");
+                        var lastRightAngleBracketLocation = trimmedValue.lastIndexOf(">");
+                        if (lastForwardSlashLocation >= 0 && lastForwardSlashLocation == trimmedValue.length - 2)
+                            trimmedValue = trimmedValue.substring(0, lastForwardSlashLocation);
+                        else if (lastRightAngleBracketLocation >= 0 && lastRightAngleBracketLocation == trimmedValue.length - 1)
+                            trimmedValue = trimmedValue.substring(0, lastRightAngleBracketLocation);
                     }
 
                     attrsList.push({name: name, value: trimmedValue});
 
-                    if (assignmentOperatorLocation < 0) {
-                        var subtag1 = tagString.substring(tagString.indexOf(attr) + attr.length);
-                        if(subtag1.search(/^"\s*\/?>/) < 0 && subtag2 != "")
-                            this.getAttributesFromTag(subtag1, attrsList);
-                    } else {
-                        var subtag2 = tagString.substring(tagString.indexOf(trimmedValue) + trimmedValue.length);
-                        if(subtag2.search(/^"\s*\/?>/) < 0 && subtag2 != "")
-                            this.getAttributesFromTag(subtag2, attrsList);
+                    var remainingTagString;
+
+                    //set remainingTagString based on whether the attribute added was standalone
+                    if(assignmentOperatorLocation < 0) {
+                        remainingTagString = tagString.substring(attr.length);
+                    }else {
+                        remainingTagString = tagString.substring(trimmedValue.length + 1);
+                        //if this was preceded by a non quoted value add the quote
+                        //this is done to differentiate attributes from the tag name
+                        //attributes will either be seperated by spaces or quotes
+                        //the delineatorRegex above would not be able to filter out the tag name without delineating by space
+                        //so thw quote is added so that a tag after an unquoted value will not be ignored
+                        //todo:Come up with a more clear explaination
+                        if(remainingTagString.search(/^['"]/) < 0)
+                            remainingTagString = "'" + remainingTagString;
                     }
 
+                    if(remainingTagString.search(/^["']\s*\/?>/) < 0 && remainingTagString != "") {
+                        this.getAttributesFromTag(remainingTagString, attrsList);
+                    }
                 }
             }
         }
