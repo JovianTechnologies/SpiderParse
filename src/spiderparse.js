@@ -81,10 +81,7 @@
             if(attrsAndValues == null){
                getStandAloneAttributes(tagString, attrsList, true);
             }else {
-                //regex cant pick out stand alone attributes, so remove all of the other attributes so that whats left
-                //must be only standalones
-                for(var i = 0; i < attrsAndValues.length; i++)
-                    tagString = tagString.replace(attrsAndValues[i], "");
+                tagString = tagString.replace(attrRegEx, "");
 
                 getStandAloneAttributes(tagString, attrsAndValues, false);
 
