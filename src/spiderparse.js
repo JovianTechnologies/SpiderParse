@@ -73,6 +73,9 @@
             return parsedHTML;
         },
         getAttributesFromTag: function(tagString, attrsList){
+            if(tagString.search(/^<\s+/) >= 0)
+                throw new Error("Improperly Formed Tag: " + tagString);
+
             var attrDelineatorsRegex = /\s+[^=]|['"]|\s*\/?>/;
             var attrLocation = tagString.search(attrDelineatorsRegex);
             var endTagSymbolRegex = /\s*"?\/?>$/;

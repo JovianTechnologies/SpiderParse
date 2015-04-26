@@ -4,6 +4,12 @@ describe("SpiderParse", function(){
         beforeEach(function(){
             attrsList = [];
         });
+
+        it("Should throw error if the tag is improperly formated", function(){
+            var tag = "< input type='text' width='500'>";
+            expect(function(){ SpiderParse.parse(tag); }).toThrowError(Error);;
+        });
+
         it("The object list passed to the function should contain each element in the tag", function(){
             var tag = "<div id='5' class='test.css' >";
             SpiderParse.getAttributesFromTag(tag, attrsList);
