@@ -12,13 +12,12 @@
         JSLitmus.test("SpiderParse Function",function(){
             SpiderParse.parse(htmlstring);
         });
-        JSLitmus.test("JQuery HTMLParse",function(){
+        JSLitmus.test("JQuery parseHTML",function(){
             jQuery.parseHTML(htmlstring);
         });
         JSLitmus.test("DOMParser",function(){
             parser.parseFromString(htmlstring,"text/html");
         });
-
         var htmlstring = "<!DOCTYPE html>" +
                     "<html lang='en'>" +
                     "<head>" +
@@ -40,7 +39,7 @@
                         "<script src='https://apis.google.com/_/scs/abc-static/_/js/k=gapi.gapi.en.JXIefcUbZZo.O/m=gapi_iframes,googleapis_client,iframes_styles_slide_menu,plusone/rt=j/sv=1/d=1/ed=1/am=AAQ/rs=AItRSTOQO0XqKCh9HBUY7V1iRmZQAcQnGg/cb=gapi.loaded_0' async=''><\/script>" +
 
                     "</head>" +
-                    " <body lang='en' bgcolor='#f0f8ff'>" +
+                    " <body lang='en'bgcolor='#f0f8ff'>" +
                         "<div id='section' width='50' height='50'>" +
                             "<p align='left' accesskey='h'>This is a section<\/p>" +
                             "<table width='100' class='myclass'>" +
