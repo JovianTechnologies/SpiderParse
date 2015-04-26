@@ -10,7 +10,7 @@ describe("SpiderParse", function(){
             expect(attrsList).toContain({name:'id', value:'5'});
             expect(attrsList).toContain({name:'class', value:'test.css'});
 
-            tag = "<p height = \"55px\" width= \"55px\" id     =32 style=      'background-color: #333333'>";
+            tag = "<p height = \"55px\"width= \"55px\"      id     =32 style=      'background-color: #333333'>";
             SpiderParse.getAttributesFromTag(tag, attrsList);
             expect(attrsList).toContain({name:'height', value:"55px"});
             expect(attrsList).toContain({name:'width', value:"55px"});
