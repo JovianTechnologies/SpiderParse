@@ -4,23 +4,45 @@
             var self = this;
 
             var SpiderNode = function(){
+                this.name = "";
                 this.attributes = [];
                 this.children = [];
                 this.childNodes = [];
-                this.innerHTML = "";
-                this.name = "";
-                this.nextSibling = null;
-                this.outerHTML = "";
-                this.parentNode = null
+                this.parentNode = null;
+                this.nextSibling = null
                 this.previousSibling = null;
+                this.innerHTML = "";
+                this.outerHTML = "";
+
+                this.createElement = function(){
+                    var element;
+
+                    if(this.name == "textNode")
+                        element = document.createTextNode(this.value);
+                    else{
+                        element = document.createElement(this.name);
+
+                        for(var i = 0; i < this.attributes.length; i++){
+                            var attr = this.attributes[i];
+                            element.setAttribute(attr.name, attr.value);
+                        }
+
+                        for(var i = 0; i < this.childNodes.length; i++){
+                            var child  = this.childNodes[i];
+                            var childElement = child.createElement();
+                            element.appendChild(childElement);
+                        }
+                    }
+
+                    return element;
+                }
             };
 
             var parsedHTML = { children:[], childNodes:[] };
 
-            (function getTags(htmlString, children, childNodes, parent, previousSibling){
-
+            (function getTags(htmlString, childNodes, children, parent, previousSibling){
                 var startTagBeginLocation= htmlString.indexOf("<");
-                var startTextNodeBeginLocation = htmlString.search(/[^<>]/);
+                var startTextNodeBeginLocation = htmlString.search(/(?!\/>)([^<>])/);
                 var startLocation;
                 var isTextNode;
                 if(startTagBeginLocation < startTextNodeBeginLocation){
@@ -45,9 +67,9 @@
                         child.parentNode = parent;
                         child.previousSibling = previousSibling;
 
-                        children.push(child);
+                        childNodes.push(child);
 
-                        child.nextSibling = getTags(htmlString.substring(endOfText), children, childNodes, parent, child);
+                        child.nextSibling = getTags(htmlString.substring(endOfText), childNodes, children, parent, child);
 
                         return child;
                     } else {
@@ -64,10 +86,13 @@
                         child.previousSibling = previousSibling;
 
                         var endTagBeginLocation = htmlString.indexOf("</" + tagName);
-                        if (endTagBeginLocation >= 0) {
-
+                        if (endTagBeginLocation > 0) {
+                            if(child.name == "br"){
+                                var stopHere = "";
+                                var test = "";
+                            }
                             //get children of this tag
-                            getTags(htmlString.substring(startTagEndLocation, endTagBeginLocation),child.children, child.childNodes, child, null);
+                            getTags(htmlString.substring(startTagEndLocation, endTagBeginLocation),child.childNodes, child.children, children, null);
 
                             child.innerHTML = htmlString.substring(startTagEndLocation + 1, endTagBeginLocation);
                             child.outerHTML = htmlString.substring(0, endTagBeginLocation + ("/" + tagName + ">" + 1).length);
@@ -76,25 +101,29 @@
                             children.push(child);
 
                             //go to next sibling
-                            child.nextSibling = getTags(htmlString.substring(endTagBeginLocation + ("</" + tagName).length), children, childNodes, parent, child);
+                            child.nextSibling = getTags(htmlString.substring(endTagBeginLocation + ("</" + tagName).length), childNodes, children, parent, child);
 
                             return child;
                         } else {
+                            if(child.name == "br"){
+                                var stopHere = "";
+                                var test = "";
+                            }
                             childNodes.push(child);
                             children.push(child);
-                            child.nextSibling = getTags(htmlString.substring(startTagEndLocation), children, childNodes, parent, child);
+                            child.nextSibling = getTags(htmlString.substring(startTagEndLocation), childNodes, children, parent, child);
                             return child;
                         }
                     }
                 }
-            })(htmlString, parsedHTML.children, parsedHTML.childNodes, null, null);
+            })(htmlString, parsedHTML.childNodes, parsedHTML.children, null, null);
 
             return parsedHTML;
         },
         getAttributesFromTag: function(tagString, attrsList){
             if(tagString.search(/^<\s+/) >= 0) throw new Error("Improperly Formed Tag: " + tagString);
 
-            var attrRegEx = /[^<.*\s]*\s*=\s*((['][^']*['])|(["][^"]*["])|([^'"\s]*\s))/g;
+            var attrRegEx = /[^<.*\s'"]*\s*=\s*((['][^']*['])|(["][^"]*["])|([^'"\s]*\s))/g;
             var attrsAndValues = tagString.match(attrRegEx);
             var standaloneAttrs;
 
@@ -104,8 +133,10 @@
 
                 if(standaloneAttrs == null) return;
 
-                for(var i = 0; i < standaloneAttrs.length; i++)
-                    attrsList.push({name: standaloneAttrs[i].trim(), value: null});
+                for(var i = 0; i < standaloneAttrs.length; i++) {
+                    var attr = standaloneAttrs[i].trim();
+                    if(attr != "")attrsList.push({name: attr, value: null});
+                }
             }else {
                 tagString = tagString.replace(attrRegEx, "");
                 standaloneAttrs = tagString.match(/\s+[^\s\/>]*/g);
@@ -117,12 +148,13 @@
                     if(av == null) continue;
 
                     var indexOfEquals = av.indexOf("=");
-                    if(indexOfEquals < 0){
-                        attrsList.push({name: av.trim(), value: null});
+                    var name = av.trim();
+                    if(indexOfEquals < 0 && name != "" && name != ''){
+                        attrsList.push({name: name, value: null});
                     }else{
                         var name = av.substring(0, indexOfEquals).trim();
                         var value = av.substring(indexOfEquals + 1).trim();
-                        attrsList.push({name: name, value: value.replace(/^["'](.*)["']$/, '$1')});
+                        if(name != "" && name != '')attrsList.push({name: name, value: value.replace(/^["'](.*)["']$/, '$1')});
                     }
                 }
             }
