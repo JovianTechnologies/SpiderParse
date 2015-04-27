@@ -25,24 +25,23 @@
 
                     //get tag by either finding a space or the end of the tag
                     var startTagEndLocation = htmlString.search(/\/?>/);
-                    var startTagEnd = htmlString.match(/\/?>/);
                     var firstSpaceLocation = htmlString.indexOf(" ");
                     var tagNameEndLocation = startTagEndLocation < firstSpaceLocation || firstSpaceLocation < 0 ? startTagEndLocation : firstSpaceLocation;
                     var tagName = htmlString.substring(1, tagNameEndLocation);
 
-                    self.getAttributesFromTag(htmlString.substring(0, startTagEndLocation) + startTagEnd, child.attributes);
+                    self.getAttributesFromTag(htmlString.substring(0, startTagEndLocation), child.attributes);
 
                     child.name = tagName;
                     child.parentNode = parent;
                     child.previousSibling = previousSibling;
 
-                    if(child.name.search(/body/i) >= 0)
-                        parsedHTML.body = child;
-                    else if(child.name.search(/head/i) >= 0)
-                        parsedHTML.head = child;
-                    else if(child.name.search(/!doctype/i) >= 0){
-                        parsedHTML.docType = child;
-                    }
+                    //if(child.name.indexOf('body') >= 0)
+                    //    parsedHTML.body = child;
+                    //else if(child.name.indexOf('head') >= 0)
+                    //    parsedHTML.head = child;
+                    //else if(child.name.indexOf('!doctype') >= 0){
+                    //    parsedHTML.docType = child;
+                    //}
 
                     var endTagBeginLocation = htmlString.indexOf("</" + tagName);
                     if(endTagBeginLocation >= 0){

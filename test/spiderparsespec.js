@@ -1,6 +1,7 @@
 describe("SpiderParse", function(){
     describe("When getting attributes", function(){
         var attrsList = [];
+
         beforeEach(function(){
             attrsList = [];
         });
@@ -11,10 +12,11 @@ describe("SpiderParse", function(){
         });
 
         it("The list passed to the function should contain each element in the tag", function(){
-            var tag = "<div id='5' class='test.css' >";
+            var tag = "<div id='5' class='test.css'>";
             SpiderParse.getAttributesFromTag(tag, attrsList);
             expect(attrsList).toContain({name:'id', value:'5'});
             expect(attrsList).toContain({name:'class', value:'test.css'});
+
         });
 
         it("The attributes should be parsed correctly regardless of spaces before or after equals signs or after values", function(){
@@ -24,6 +26,7 @@ describe("SpiderParse", function(){
             expect(attrsList).toContain({name:'width', value:"55px"});
             expect(attrsList).toContain({name: "id", value: "32"});
             expect(attrsList).toContain({name: "style", value: 'background-color: #333333'});
+            expect(attrsList).toContain({name:"num", value:"5"});
         });
 
         it("The list passed to the function should be empty if the tag has no attributes", function(){
@@ -41,12 +44,56 @@ describe("SpiderParse", function(){
         });
 
         it("If standalone and assigned attributes exist they all should be added to the list", function(){
-            var tag = "<section #IMPLIED height=32 hidden=\"true\">";
+            var tag = "<section #IMPLIED height=32 hidden=\"true\"  ng-app foo>";
             SpiderParse.getAttributesFromTag(tag, attrsList);
             expect(attrsList).toContain({name:"#IMPLIED", value:null});
             expect(attrsList).toContain({name:"height", value:"32"});
             expect(attrsList).toContain({name:"hidden", value: "true"});
+            expect(attrsList).toContain({name:"ng-app", value:null});
+            expect(attrsList).toContain({name:"foo", value:null});
         });
     });
 
+    describe("When parsing html page", function(){
+        var parsedHTML = SpiderParse.parse(htmlstring);
+
+        it("Should capture head on base object", function(){
+            expect(parsedHTML.head).not.toBe(null);
+            expect(parsedHTML.head.name).toBe('head');
+            expect(parsedHTML.head.attributes.length).toBe(0);
+            expect(parsedHTML.head.childNodes.length).toBe(16);
+            expect(parsedHTML.head.parentNode).not.toBe(null);
+            expect(parsedHTML.head.parentNode.name).toBe('html');
+            expect(parsedHTML.head.previousSibling).toBe(null);
+            expect(parsedHTML.head.nextSibling).not.toBe(null);
+            expect(parsedHTML.head.nextSibling.name).toBe('body');
+            expect(parsedHTML.head.outerHTML).toBe(headOuterHtml);
+            expect(parsedHTML.head.innerHTML).toBe(headInnerHtml);
+        });
+
+        it("Should capture body on base object", function(){
+            expect(parsedHTML.body).not.toBe(null);
+            expect(parsedHTML.body.name).toBe('body');
+            expect(parsedHTML.body.attributes.length).toBe(2);
+            expect(parsedHTML.body.childNodes.length).toBe(6);
+            expect(parsedHTML.body.parentNode).not.toBe(null);
+            expect(parsedHTML.body.parentNode.name).toBe('html');
+            expect(parsedHTML.body.previousSibling).not.toBe(null);
+            expect(parsedHTML.body.previousSibling.name).toBe('head');
+            expect(parsedHTML.body.nextSibling).toBe(undefined);
+            expect(parsedHTML.body.outerHTML).toBe(bodyOuterHtml);
+            expect(parsedHTML.body.innerHTML).toBe(bodyInnerHtml);
+        });
+
+        it("Should capture doctype on base object", function(){
+            expect(parsedHTML.docType).not.toBe(null);
+            expect(parsedHTML.docType.name).toBe(('!DOCTYPE'));
+            expect(parsedHTML.docType.attributes.length).toBe(1);
+            expect(parsedHTML.docType.attributes[0].name).toBe('html');
+            expect(parsedHTML.docType.parentNode).toBe(null);
+            expect(parsedHTML.docType.previousSibling).toBe(null);
+            expect(parsedHTML.docType.nextSibling).not.toBe(null);
+            expect(parsedHTML.docType.nextSibling.name).toBe('html');
+        });
+    });
 });
