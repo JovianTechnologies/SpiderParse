@@ -33,7 +33,7 @@ describe("SpiderParse", function(){
         });
 
         it("If the tag contains attributes with no equal signs they should appear with null values", function(){
-            var tag = "<div ng-app #IMPLIED bar>"
+            var tag = "<div ng-app #IMPLIED bar/>"
             SpiderParse.getAttributesFromTag(tag, attrsList);
             expect(attrsList).toContain({name:"ng-app", value:null});
             expect(attrsList).toContain({name:"#IMPLIED", value:null});

@@ -1,9 +1,8 @@
 (function(window){
-
     window.SpiderParse = {
         parse: function(htmlString){
             var self = this;
-            var attrRegEx = /[^<.*\s]*\s*=\s*((['][^']*['])|(["][^"]*["])|([^'"]*\s))/g;
+
             var SpiderNode = function(){
                 this.attributes = [];
                 this.childNodes = [];
@@ -54,7 +53,6 @@
                         child.innerHTML = htmlString.substring(startTagEndLocation + 1, endTagBeginLocation);
                         child.outerHTML = htmlString.substring(0, endTagBeginLocation + ("/" + tagName + ">" + 1).length);
 
-                        //add children of object to the object itself
                         childList.push(child);
 
                         //go to next sibling
@@ -76,17 +74,26 @@
 
             var attrRegEx = /[^<.*\s]*\s*=\s*((['][^']*['])|(["][^"]*["])|([^'"\s]*\s))/g;
             var attrsAndValues = tagString.match(attrRegEx);
-
+            var standaloneAttrs;
             //if there is no match, then check to see if the tag consists of only stand alone attributes
             if(attrsAndValues == null){
-               getStandAloneAttributes(tagString, attrsList, true);
+                standaloneAttrs = tagString.match(/\s+[^\s\/>]*/g);
+
+                if(standaloneAttrs == null) return;
+
+                for(var i = 0; i < standaloneAttrs.length; i++)
+                    attrsList.push({name: standaloneAttrs[i].trim(), value: null});
+
             }else {
                 tagString = tagString.replace(attrRegEx, "");
-                 var standaloneAttrs = tagString.match(/\s*.*\s*\/?>?/g);
-                //getStandAloneAttributes(tagString, attrsAndValues, false);
-                attrsAndValues.concat(standaloneAttrs);
+                standaloneAttrs = tagString.match(/\s+[^\s\/>]*/g);
+                attrsAndValues = attrsAndValues.concat(standaloneAttrs);
+
                 for(var i = 0; i < attrsAndValues.length; i++){
                     var av = attrsAndValues[i];
+
+                    if(av == null) continue;
+
                     var indexOfEquals = av.indexOf("=");
                     if(indexOfEquals < 0){
                         attrsList.push({name: av.trim(), value: null});
@@ -95,18 +102,6 @@
                         var value = av.substring(indexOfEquals + 1).trim();
                         attrsList.push({name: name, value: value.replace(/^["'](.*)["']$/, '$1')});
                     }
-                }
-            }
-
-            function getStandAloneAttributes(standAloneAttrsString, attributesList, containsOnlyStandAlone){
-                var standAloneAttrsList = standAloneAttrsString.split(" ");
-
-                for(var i = 0; i < standAloneAttrsList.length; i++){
-                    var attr = standAloneAttrsList[i];
-                    var rightAngleBracketLocation = attr.indexOf(">");
-                    attr = rightAngleBracketLocation < 0 ? attr : attr.substring(0, rightAngleBracketLocation);
-                    if(attr.indexOf("<") < 0 && attr.search(/\s*\/?>/) != 0 && attr != "")
-                        containsOnlyStandAlone ? attrsList.push({name: attr, value: null}) :attributesList.push(attr);
                 }
             }
         }
