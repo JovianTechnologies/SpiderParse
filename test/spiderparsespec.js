@@ -73,5 +73,21 @@ describe("SpiderParse", function(){
             expect(parsedHTML.childNodes[1].childNodes[0].childNodes.length).toBe(16);
             expect(parsedHTML.childNodes[1].childNodes[1].childNodes.length).toBe(6);
         });
+
+        it("Text nodes should be only stored in the children list", function(){
+            expect(parsedHTML.childNodes[1].childNodes[1].children[0].name).toBe("textNode");
+            expect(parsedHTML.childNodes[1].childNodes[1].children[0].value).toBe("This is only a test\n");
+            expect(parsedHTML.childNodes[1].childNodes[1].children[0].nextSibling.name.toLowerCase()).toBe("div");
+            expect(parsedHTML.childNodes[1].childNodes[1].children[1].previousSibling.name.toLowerCase()).toBe("textnode");
+            expect(parsedHTML.childNodes[1].childNodes[1].childNodes[0].name).not.toBe("textNode");
+            expect(parsedHTML.childNodes[1].childNodes[1].childNodes[0].value).not.toBe("This is only a test\n");
+            expect(parsedHTML.childNodes[1].childNodes[1].childNodes[0].name.toLowerCase()).toBe("div");
+        })
+    });
+
+    describe("When using the create object function", function(){
+        it("Object should be of proper type", function(){
+
+        });
     });
 });

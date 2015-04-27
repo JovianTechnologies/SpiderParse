@@ -5,6 +5,7 @@
 
             var SpiderNode = function(){
                 this.attributes = [];
+                this.children = [];
                 this.childNodes = [];
                 this.innerHTML = "";
                 this.name = "";
@@ -14,49 +15,79 @@
                 this.previousSibling = null;
             };
 
-            var parsedHTML = { childNodes: [] };
+            var parsedHTML = { children:[], childNodes:[] };
 
-            (function getTags(htmlString, childList, parent, previousSibling){
-                var startTagBeginLocation = htmlString.indexOf("<");
-                if(startTagBeginLocation >= 0 ){
-                    htmlString = htmlString.substring(startTagBeginLocation);
+            (function getTags(htmlString, children, childNodes, parent, previousSibling){
+
+                var startTagBeginLocation= htmlString.indexOf("<");
+                var startTextNodeBeginLocation = htmlString.search(/[^<>]/);
+                var startLocation;
+                var isTextNode;
+                if(startTagBeginLocation < startTextNodeBeginLocation){
+                    startLocation = startTagBeginLocation;
+                    isTextNode = false;
+                }else{
+                    startLocation = startTextNodeBeginLocation;
+                    isTextNode = true;
+                }
+                if(startLocation >= 0 ) {
+                    htmlString = htmlString.substring(startLocation);
 
                     var child = new SpiderNode();
 
-                    //get tag by either finding a space or the end of the tag
-                    var startTagEndLocation = htmlString.search(/\/?>/);
-                    var firstSpaceLocation = htmlString.indexOf(" ");
-                    var tagNameEndLocation = startTagEndLocation < firstSpaceLocation || firstSpaceLocation < 0 ? startTagEndLocation : firstSpaceLocation;
-                    var tagName = htmlString.substring(1, tagNameEndLocation);
+                    if (isTextNode) {
+                        var endOfText = htmlString.indexOf("<");
+                        child.attributes = null;
+                        child.name = "textNode";
+                        child.value = htmlString.substring(0, endOfText);
+                        child.innerHTML = null;
+                        child.outerHTML = null;
+                        child.parentNode = parent;
+                        child.previousSibling = previousSibling;
 
-                    self.getAttributesFromTag(htmlString.substring(0, startTagEndLocation), child.attributes);
+                        children.push(child);
 
-                    child.name = tagName;
-                    child.parentNode = parent;
-                    child.previousSibling = previousSibling;
-
-                    var endTagBeginLocation = htmlString.indexOf("</" + tagName);
-                    if(endTagBeginLocation >= 0){
-
-                        //get children of this tag
-                        getTags(htmlString.substring(startTagEndLocation, endTagBeginLocation), child.childNodes, child, null);
-
-                        child.innerHTML = htmlString.substring(startTagEndLocation + 1, endTagBeginLocation);
-                        child.outerHTML = htmlString.substring(0, endTagBeginLocation + ("/" + tagName + ">" + 1).length);
-
-                        childList.push(child);
-
-                        //go to next sibling
-                        child.nextSibling = getTags(htmlString.substring(endTagBeginLocation + ("</" + tagName).length), childList, parent, child);
+                        child.nextSibling = getTags(htmlString.substring(endOfText), children, childNodes, parent, child);
 
                         return child;
-                    }else{
-                        childList.push(child);
-                        child.nextSibling = getTags(htmlString.substring(startTagEndLocation), childList, parent, child);
-                        return child;
+                    } else {
+                        //get tag by either finding a space or the end of the tag
+                        var startTagEndLocation = htmlString.search(/\/?>/);
+                        var firstSpaceLocation = htmlString.indexOf(" ");
+                        var tagNameEndLocation = startTagEndLocation < firstSpaceLocation || firstSpaceLocation < 0 ? startTagEndLocation : firstSpaceLocation;
+                        var tagName = htmlString.substring(1, tagNameEndLocation);
+
+                        self.getAttributesFromTag(htmlString.substring(0, startTagEndLocation), child.attributes);
+
+                        child.name = tagName;
+                        child.parentNode = parent;
+                        child.previousSibling = previousSibling;
+
+                        var endTagBeginLocation = htmlString.indexOf("</" + tagName);
+                        if (endTagBeginLocation >= 0) {
+
+                            //get children of this tag
+                            getTags(htmlString.substring(startTagEndLocation, endTagBeginLocation),child.children, child.childNodes, child, null);
+
+                            child.innerHTML = htmlString.substring(startTagEndLocation + 1, endTagBeginLocation);
+                            child.outerHTML = htmlString.substring(0, endTagBeginLocation + ("/" + tagName + ">" + 1).length);
+
+                            childNodes.push(child);
+                            children.push(child);
+
+                            //go to next sibling
+                            child.nextSibling = getTags(htmlString.substring(endTagBeginLocation + ("</" + tagName).length), children, childNodes, parent, child);
+
+                            return child;
+                        } else {
+                            childNodes.push(child);
+                            children.push(child);
+                            child.nextSibling = getTags(htmlString.substring(startTagEndLocation), children, childNodes, parent, child);
+                            return child;
+                        }
                     }
                 }
-            })(htmlString, parsedHTML.childNodes, null, null);
+            })(htmlString, parsedHTML.children, parsedHTML.childNodes, null, null);
 
             return parsedHTML;
         },
@@ -66,6 +97,7 @@
             var attrRegEx = /[^<.*\s]*\s*=\s*((['][^']*['])|(["][^"]*["])|([^'"\s]*\s))/g;
             var attrsAndValues = tagString.match(attrRegEx);
             var standaloneAttrs;
+
             //if there is no match, then check to see if the tag consists of only stand alone attributes
             if(attrsAndValues == null){
                 standaloneAttrs = tagString.match(/\s+[^\s\/>]*/g);
@@ -74,7 +106,6 @@
 
                 for(var i = 0; i < standaloneAttrs.length; i++)
                     attrsList.push({name: standaloneAttrs[i].trim(), value: null});
-
             }else {
                 tagString = tagString.replace(attrRegEx, "");
                 standaloneAttrs = tagString.match(/\s+[^\s\/>]*/g);

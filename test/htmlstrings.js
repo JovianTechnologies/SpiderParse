@@ -23,6 +23,7 @@ window.htmlstring = "<!DOCTYPE html>" +
 
     "</head>" +
     " <body lang='en'bgcolor='#f0f8ff'>" +
+    "This is only a test\n" +
     "<div id='section' width='50' height='50'>" +
     "<p align='left' accesskey='h'>This is a section<\/p>" +
     "<table width='100' class='myclass'>" +
