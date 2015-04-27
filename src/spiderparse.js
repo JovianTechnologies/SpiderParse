@@ -35,14 +35,6 @@
                     child.parentNode = parent;
                     child.previousSibling = previousSibling;
 
-                    //if(child.name.indexOf('body') >= 0)
-                    //    parsedHTML.body = child;
-                    //else if(child.name.indexOf('head') >= 0)
-                    //    parsedHTML.head = child;
-                    //else if(child.name.indexOf('!doctype') >= 0){
-                    //    parsedHTML.docType = child;
-                    //}
-
                     var endTagBeginLocation = htmlString.indexOf("</" + tagName);
                     if(endTagBeginLocation >= 0){
 

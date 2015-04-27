@@ -57,43 +57,21 @@ describe("SpiderParse", function(){
     describe("When parsing html page", function(){
         var parsedHTML = SpiderParse.parse(htmlstring);
 
-        it("Should capture head on base object", function(){
-            expect(parsedHTML.head).not.toBe(null);
-            expect(parsedHTML.head.name).toBe('head');
-            expect(parsedHTML.head.attributes.length).toBe(0);
-            expect(parsedHTML.head.childNodes.length).toBe(16);
-            expect(parsedHTML.head.parentNode).not.toBe(null);
-            expect(parsedHTML.head.parentNode.name).toBe('html');
-            expect(parsedHTML.head.previousSibling).toBe(null);
-            expect(parsedHTML.head.nextSibling).not.toBe(null);
-            expect(parsedHTML.head.nextSibling.name).toBe('body');
-            expect(parsedHTML.head.outerHTML).toBe(headOuterHtml);
-            expect(parsedHTML.head.innerHTML).toBe(headInnerHtml);
+        it("Doctype and html should be first level children", function(){
+            expect(parsedHTML.childNodes[0].name).toBe('!DOCTYPE');
+            expect(parsedHTML.childNodes[1].name).toBe('html');
         });
 
-        it("Should capture body on base object", function(){
-            expect(parsedHTML.body).not.toBe(null);
-            expect(parsedHTML.body.name).toBe('body');
-            expect(parsedHTML.body.attributes.length).toBe(2);
-            expect(parsedHTML.body.childNodes.length).toBe(6);
-            expect(parsedHTML.body.parentNode).not.toBe(null);
-            expect(parsedHTML.body.parentNode.name).toBe('html');
-            expect(parsedHTML.body.previousSibling).not.toBe(null);
-            expect(parsedHTML.body.previousSibling.name).toBe('head');
-            expect(parsedHTML.body.nextSibling).toBe(undefined);
-            expect(parsedHTML.body.outerHTML).toBe(bodyOuterHtml);
-            expect(parsedHTML.body.innerHTML).toBe(bodyInnerHtml);
+        it("Head and body should be second level children", function(){
+            expect(parsedHTML.childNodes[1].childNodes[0].name).toBe('head');
+            expect(parsedHTML.childNodes[1].childNodes[1].name).toBe('body');
         });
 
-        it("Should capture doctype on base object", function(){
-            expect(parsedHTML.docType).not.toBe(null);
-            expect(parsedHTML.docType.name).toBe(('!DOCTYPE'));
-            expect(parsedHTML.docType.attributes.length).toBe(1);
-            expect(parsedHTML.docType.attributes[0].name).toBe('html');
-            expect(parsedHTML.docType.parentNode).toBe(null);
-            expect(parsedHTML.docType.previousSibling).toBe(null);
-            expect(parsedHTML.docType.nextSibling).not.toBe(null);
-            expect(parsedHTML.docType.nextSibling.name).toBe('html');
+        it("All nodes should have the correct number of children", function(){
+            expect(parsedHTML.childNodes[0].childNodes.length).toBe(0);
+            expect(parsedHTML.childNodes[1].childNodes.length).toBe(2);
+            expect(parsedHTML.childNodes[1].childNodes[0].childNodes.length).toBe(16);
+            expect(parsedHTML.childNodes[1].childNodes[1].childNodes.length).toBe(6);
         });
     });
 });
