@@ -82,9 +82,9 @@
                getStandAloneAttributes(tagString, attrsList, true);
             }else {
                 tagString = tagString.replace(attrRegEx, "");
-
-                getStandAloneAttributes(tagString, attrsAndValues, false);
-
+                 var standaloneAttrs = tagString.match(/\s*.*\s*\/?>?/g);
+                //getStandAloneAttributes(tagString, attrsAndValues, false);
+                attrsAndValues.concat(standaloneAttrs);
                 for(var i = 0; i < attrsAndValues.length; i++){
                     var av = attrsAndValues[i];
                     var indexOfEquals = av.indexOf("=");
