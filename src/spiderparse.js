@@ -3,108 +3,67 @@
         parse: function(htmlString){
             var self = this;
 
-            var SpiderNode = function(){
-                this.name = "";
-                this.attributes = [];
-                this.children = [];
-                this.childNodes = [];
-                this.parentNode = null;
-                this.nextSibling = null;
-                this.previousSibling = null;
-                this.innerHTML = "";
-                this.outerHTML = "";
-
-                this.createElement = function(){
-                    var element;
-
-                    if(this.name == "textNode")
-                        element = document.createTextNode(this.value);
-                    else{
-                        element = document.createElement(this.name);
-
-                        for(var i = 0; i < this.attributes.length; i++){
-                            var attr = this.attributes[i];
-                            element.setAttribute(attr.name, attr.value);
-                        }
-
-                        for(var i = 0; i < this.childNodes.length; i++){
-                            var child  = this.childNodes[i];
-                            var childElement = child.createElement();
-                            element.appendChild(childElement);
-                        }
-                    }
-                    return element;
-                }
-            };
-
             var parsedHTML = { children:[], childNodes:[] };
-
+            var doc = document.implementation.createHTMLDocument("");
             (function getTags(htmlString, childNodes, children, parent, previousSibling){
-                var startTagBeginLocation= htmlString.indexOf("<");
-                var startTextNodeBeginLocation = htmlString.search(/(?!\/>)([^<>])/);
-                var isTextNode = startTagBeginLocation > startTextNodeBeginLocation || startTagBeginLocation < 0;
-                var startLocation = isTextNode  ? startTextNodeBeginLocation : startTagBeginLocation;
-                if(startLocation >= 0 ) {
-                    htmlString = htmlString.substring(startLocation);
+                var getAllNodesRegex = /(<[^<>]*)|((?!><)(>[^<>]*))/g;
+                var allNodes = htmlString.match(getAllNodesRegex);
 
-                    var child = new SpiderNode();
+                (function getTagsHelper (nodes, parent){
+                    var currentChild = nodes[0];
 
-                    if (isTextNode) {
-                        var endOfText = htmlString.indexOf("<");
-                        child.attributes = null;
-                        child.name = "textNode";
-                        child.value = endOfText < 0 ? htmlString.match(/[^<>]*/)[0] : htmlString.substring(0, endOfText);
-                        child.innerHTML = null;
-                        child.outerHTML = null;
-                        child.parentNode = parent;
-                        child.previousSibling = previousSibling;
+                    var name  = currentChild.substring(1, currentChild.search(/\s|>/));
 
-                        childNodes.push(child);
 
-                        if(endOfText >= 0)child.nextSibling = getTags(htmlString.substring(endOfText), childNodes, children, parent, child);
-
-                        return child;
-                    } else {
-                        //get tag by either finding a space or the end of the tag
-                        var startTagEndLocation = htmlString.search(/\/?>/);
-                        var firstSpaceLocation = htmlString.indexOf(" ");
-                        var tagNameEndLocation = startTagEndLocation < firstSpaceLocation || firstSpaceLocation < 0 ? startTagEndLocation : firstSpaceLocation;
-                        var tagName = htmlString.substring(1, tagNameEndLocation);
-
-                        self.getAttributesFromTag(htmlString.substring(0, startTagEndLocation), child.attributes);
-
-                        child.name = tagName;
-                        child.parentNode = parent;
-                        child.previousSibling = previousSibling;
-
-                        var endTagBeginLocation = htmlString.indexOf("</" + tagName);
-                        if (endTagBeginLocation > 0) {
-                            //get children of this tag
-                            getTags(htmlString.substring(startTagEndLocation, endTagBeginLocation),child.childNodes, child.children, children, null);
-
-                            child.innerHTML = htmlString.substring(startTagEndLocation + 1, endTagBeginLocation);
-                            child.outerHTML = htmlString.substring(0, endTagBeginLocation + ("/" + tagName + ">" + 1).length);
-
-                            childNodes.push(child);
-                            children.push(child);
-
-                            //go to next sibling
-                            child.nextSibling = getTags(htmlString.substring(endTagBeginLocation + ("</" + tagName).length), childNodes, children, parent, child);
-
-                            return child;
-                        } else {
-                            childNodes.push(child);
-                            children.push(child);
-                            child.nextSibling = getTags(htmlString.substring(startTagEndLocation), childNodes, children, parent, child);
-                            return child;
+                    var index = 1;
+                    var closeTagCounter =  1;
+                    while(closeTagCounter > 0){
+                        if(index >= nodes.length){
+                            break;
                         }
+
+                        if(nodes[index].indexOf("<" + name) >= 0){
+                            closeTagCounter++;
+                        }else if(nodes[index].indexOf("</" + name) >= 0){
+                            closeTagCounter--;
+                        }
+
+                        if(closeTagCounter == 0) break;
+
+                        index++;
+
                     }
-                }
+                        var element = doc.createElement(name);
+
+                        var attrs = []
+                        self.getAttributesFromTag(currentChild, element);
+
+                        //check if this is tag has an end tag.
+                        if(index >= nodes.length){
+                            if(parent == null) parsedHTML.children.push(element);
+                            else parent.appendChild(element);
+
+                            getTagsHelper(nodes.slice(1), parent);
+                        }else{
+                            //get children if there are any
+                            var cNodes = nodes.slice(1, index);
+                            if(cNodes.length > 0)getTagsHelper(cNodes, element);
+
+                            if(parent == null) parsedHTML.children.push(element);
+                            else parent.appendChild(element);
+
+                            //get next sibling
+                            if(index + 1 < nodes.length)
+                                getTagsHelper(nodes.slice(index + 1), parent);
+                        }
+                    //}
+                })(allNodes, null);
+
             })(htmlString, parsedHTML.childNodes, parsedHTML.children, null, null);
 
             return parsedHTML;
         },
-        getAttributesFromTag: function(tagString, attrsList){
+        getAttributesFromTag: function(tagString, element){
             if(tagString.search(/^<\s+/) >= 0) throw new Error("Improperly Formed Tag: " + tagString);
 
             var attrRegEx = /[^<.*\s'"]*\s*=\s*((['][^']*['])|(["][^"]*["])|([^'"\s]*\s))/g;
@@ -119,7 +78,7 @@
 
                 for(var i = 0; i < standaloneAttrs.length; i++) {
                     var attr = standaloneAttrs[i].trim();
-                    if(attr != "")attrsList.push({name: attr, value: null});
+                    if(attr != "")element.setAttribute(attr, null);
                 }
             }else {
                 tagString = tagString.replace(attrRegEx, "");
@@ -134,11 +93,11 @@
                     var indexOfEquals = av.indexOf("=");
                     var name = av.trim();
                     if(indexOfEquals < 0 && name != "" && name != ''){
-                        attrsList.push({name: name, value: null});
+                        element.setAttribute(name, null);
                     }else{
                         var name = av.substring(0, indexOfEquals).trim();
                         var value = av.substring(indexOfEquals + 1).trim();
-                        if(name != "" && name != '')attrsList.push({name: name, value: value.replace(/^["'](.*)["']$/, '$1')});
+                        if(name != "" && name != '')element.setAttribute(name, value.replace(/^["'](.*)["']$/, '$1'));
                     }
                 }
             }

@@ -10,8 +10,9 @@
     <script>
 
         var parser = new DOMParser();
+        var b;
         JSLitmus.test("SpiderParse Function",function(){
-            SpiderParse.parse(htmlstring);
+            b = SpiderParse.parse(htmlstring);
         });
         JSLitmus.test("JQuery parseHTML",function(){
             jQuery.parseHTML(htmlstring);

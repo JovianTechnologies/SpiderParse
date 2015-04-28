@@ -1,7 +1,7 @@
 /**
  * Created by Eric on 4/26/2015.
  */
-window.htmlstring = "<!DOCTYPE html>" +
+window.htmlstring =
     "<html lang='en'>" +
     "<head>" +
     "<meta charset='GB18030'>" +
@@ -25,7 +25,7 @@ window.htmlstring = "<!DOCTYPE html>" +
     " <body lang='en'bgcolor='#f0f8ff'>" +
     "This is only a test\n<br /><br><br />" +
     "<div id='section' width='50' height='50'>" +
-    "<p align='left' accesskey='h'>This is a section<\/p>" +
+    "<p align='left' accesskey='h'>This is a section<div>TTT</div><\/p>" +
     "<table width='100' class='myclass'>" +
     "<tr>" +
     "<td width='100' colspan='2'>Name<\/td>" +
