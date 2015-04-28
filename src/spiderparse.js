@@ -15,6 +15,7 @@
                 this.outerHTML = "";
 
                 this.createElement = function(){
+                    //var doc = document.implementation.createHTMLDocument("document");
                     var element;
 
                     if(this.name == "textNode")
@@ -43,15 +44,8 @@
             (function getTags(htmlString, childNodes, children, parent, previousSibling){
                 var startTagBeginLocation= htmlString.indexOf("<");
                 var startTextNodeBeginLocation = htmlString.search(/(?!\/>)([^<>])/);
-                var startLocation;
-                var isTextNode;
-                if(startTagBeginLocation < startTextNodeBeginLocation){
-                    startLocation = startTagBeginLocation;
-                    isTextNode = false;
-                }else{
-                    startLocation = startTextNodeBeginLocation;
-                    isTextNode = true;
-                }
+                var isTextNode = startTagBeginLocation > startTextNodeBeginLocation || startTagBeginLocation < 0;
+                var startLocation = isTextNode  ? startTextNodeBeginLocation : startTagBeginLocation;
                 if(startLocation >= 0 ) {
                     htmlString = htmlString.substring(startLocation);
 
@@ -61,7 +55,7 @@
                         var endOfText = htmlString.indexOf("<");
                         child.attributes = null;
                         child.name = "textNode";
-                        child.value = htmlString.substring(0, endOfText);
+                        child.value = endOfText < 0 ? htmlString.substring(1) : htmlString.substring(0, endOfText);
                         child.innerHTML = null;
                         child.outerHTML = null;
                         child.parentNode = parent;
@@ -69,7 +63,7 @@
 
                         childNodes.push(child);
 
-                        child.nextSibling = getTags(htmlString.substring(endOfText), childNodes, children, parent, child);
+                        if(endOfText >= 0)child.nextSibling = getTags(htmlString.substring(endOfText), childNodes, children, parent, child);
 
                         return child;
                     } else {
@@ -87,10 +81,6 @@
 
                         var endTagBeginLocation = htmlString.indexOf("</" + tagName);
                         if (endTagBeginLocation > 0) {
-                            if(child.name == "br"){
-                                var stopHere = "";
-                                var test = "";
-                            }
                             //get children of this tag
                             getTags(htmlString.substring(startTagEndLocation, endTagBeginLocation),child.childNodes, child.children, children, null);
 
@@ -105,10 +95,6 @@
 
                             return child;
                         } else {
-                            if(child.name == "br"){
-                                var stopHere = "";
-                                var test = "";
-                            }
                             childNodes.push(child);
                             children.push(child);
                             child.nextSibling = getTags(htmlString.substring(startTagEndLocation), childNodes, children, parent, child);

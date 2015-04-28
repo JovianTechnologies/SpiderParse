@@ -117,6 +117,6 @@ describe("SpiderParse", function(){
             expect(node2.attributes[0].value).toBe("en");
             expect(node2.attributes[1].name).toBe("bgcolor");
             expect(node2.attributes[1].value).toBe("#f0f8ff");
-        })
+        });
     });
 });
