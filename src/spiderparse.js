@@ -9,13 +9,12 @@
                 this.children = [];
                 this.childNodes = [];
                 this.parentNode = null;
-                this.nextSibling = null
+                this.nextSibling = null;
                 this.previousSibling = null;
                 this.innerHTML = "";
                 this.outerHTML = "";
 
                 this.createElement = function(){
-                    //var doc = document.implementation.createHTMLDocument("document");
                     var element;
 
                     if(this.name == "textNode")
@@ -34,7 +33,6 @@
                             element.appendChild(childElement);
                         }
                     }
-
                     return element;
                 }
             };
@@ -55,7 +53,7 @@
                         var endOfText = htmlString.indexOf("<");
                         child.attributes = null;
                         child.name = "textNode";
-                        child.value = endOfText < 0 ? htmlString.substring(1) : htmlString.substring(0, endOfText);
+                        child.value = endOfText < 0 ? htmlString.match(/[^<>]*/)[0] : htmlString.substring(0, endOfText);
                         child.innerHTML = null;
                         child.outerHTML = null;
                         child.parentNode = parent;
