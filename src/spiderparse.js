@@ -14,7 +14,7 @@
 
                     var name;
                     if(!isTextNode) {
-                        var nameEndIndex = currentChild.search(/\s/);
+                        var nameEndIndex = currentChild.indexOf(" ");
                         name  = nameEndIndex < 0 ? currentChild.substring(1):currentChild.substring(1, nameEndIndex);
                     }
 
@@ -42,7 +42,7 @@
                         //get children if there are any
                         var cNodes = nodes.slice(1);
                         var childinc = 1;
-                        if(cNodes[0].indexOf("</") != 0)childinc = childinc + getTagsHelper(cNodes, element, inc++);
+                        if(cNodes[0].indexOf("</") != 0)childinc = childinc + getTagsHelper(cNodes, element);
 
                         if(parent == null) parsedHTML.children.push(element);
                         else parent.appendChild(element);
@@ -51,7 +51,7 @@
                         var sibinc = 1;
                         var nextSib = nodes.slice(sibinc + childinc);
                         if(nextSib.length > 0 && nextSib[0].indexOf("</") != 0)
-                            sibinc = sibinc + getTagsHelper(nextSib, parent, inc++);
+                            sibinc = sibinc + getTagsHelper(nextSib, parent);
 
                         return sibinc + childinc;
                     }
