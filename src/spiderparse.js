@@ -5,7 +5,7 @@
             var parsedHTML = { children:[], childNodes:[] };
             var doc = document.implementation.createHTMLDocument("");
             (function getTags(htmlString){
-                var getAllNodesRegex = /(<[^<>]*)|((?!><)(>[^<>]*))/g;
+                var getAllNodesRegex = /(<[^<>]*)|((?!>\s+)(?!>$)(?!><)(>[^<>]*))/g;
                 var allNodes = htmlString.match(getAllNodesRegex);
 
                 (function getTagsHelper (nodes, parent, inc){
@@ -26,9 +26,12 @@
                         self.getAttributesFromTag(currentChild, element);
                     }
 
-                    //check if this is tag has an end tag.
+                    //The childinc and sibinc variables used in the following section are used to keep track of the
+                    //position of the current child in relation to its parent, I do this so that I can know where
+                    //a parent node's ending tag is with out running a while loop through the entire array of nodes
+                    //to find it on each recursive call of getTagsHelper.
                     if(isTextNode){
-                        if(parent == null) parsedHTML.children.push(element);
+                        if (parent == null) parsedHTML.children.push(element);
                         else parent.appendChild(element);
 
                         var nextNodes = nodes.slice(1);
@@ -40,18 +43,18 @@
 
                     }else{
                         //get children if there are any
-                        var cNodes = nodes.slice(1);
+                        var nextChildNodes = nodes.slice(1);
                         var childinc = 1;
-                        if(cNodes[0].indexOf("</") != 0)childinc = childinc + getTagsHelper(cNodes, element);
+                        if(nextChildNodes[0].indexOf("</") != 0)childinc = childinc + getTagsHelper(nextChildNodes, element);
 
                         if(parent == null) parsedHTML.children.push(element);
                         else parent.appendChild(element);
 
                         //get next sibling
                         var sibinc = 1;
-                        var nextSib = nodes.slice(sibinc + childinc);
-                        if(nextSib.length > 0 && nextSib[0].indexOf("</") != 0)
-                            sibinc = sibinc + getTagsHelper(nextSib, parent);
+                        var nextNodes = nodes.slice(sibinc + childinc);
+                        if(nextNodes.length > 0 && nextNodes[0].indexOf("</") != 0)
+                            sibinc = sibinc + getTagsHelper(nextNodes, parent);
 
                         return sibinc + childinc;
                     }
