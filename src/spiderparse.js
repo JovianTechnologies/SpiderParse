@@ -9,56 +9,67 @@
                 var getAllNodesRegex = /(<[^<>]*)|((?!><)(>[^<>]*))/g;
                 var allNodes = htmlString.match(getAllNodesRegex);
 
-                (function getTagsHelper (nodes, parent){
+                (function getTagsHelper (nodes, parent, inc){
                     var currentChild = nodes[0];
-
-                    var name  = currentChild.substring(1, currentChild.search(/\s|>/));
-
+                    var isTextNode = currentChild.charAt(0) == ">";
 
                     var index = 1;
                     var closeTagCounter =  1;
-                    while(closeTagCounter > 0){
-                        if(index >= nodes.length){
-                            break;
+                    if(!isTextNode) {
+                        nameEndIndex = currentChild.search(/\s/);
+                        name  = nameEndIndex < 0 ? currentChild.substring(1):currentChild.substring(1, nameEndIndex);
+
+                        //find end tag for this element
+                        while (closeTagCounter > 0) {
+                            if (index >= nodes.length)break;
+
+                            if (nodes[index].indexOf("<" + name) >= 0)
+                                closeTagCounter++;
+                            else if (nodes[index].indexOf("</" + name) >= 0)
+                                closeTagCounter--;
+
+                            if (closeTagCounter == 0) break;
+
+                            index++;
                         }
+                    }
 
-                        if(nodes[index].indexOf("<" + name) >= 0){
-                            closeTagCounter++;
-                        }else if(nodes[index].indexOf("</" + name) >= 0){
-                            closeTagCounter--;
-                        }
+                    var element;
+                    var nameEndIndex;
+                    var name;
+                    if(isTextNode)
+                        element = doc.createTextNode(currentChild.substring(1));
+                    else{
+                        element = doc.createElement(name);
+                        self.getAttributesFromTag(currentChild, element);
+                    }
 
-                        if(closeTagCounter == 0) break;
+                    //check if this is tag has an end tag.
+                    if(index >= nodes.length || isTextNode){
+                        if(parent == null) parsedHTML.children.push(element);
+                        else parent.appendChild(element);
 
-                        index++;
+                        var nextNodes = nodes.slice(1, nodes.length);
+                        if(nextNodes.length > 0)
+                            getTagsHelper(nextNodes, parent);
+
+                    }else{
+                        //get children if there are any
+                        var cNodes = nodes.slice(1, index);
+                        var childinc = 1;
+                        if(cNodes.length > 0)childinc = childinc + getTagsHelper(cNodes, element, inc++);
+                        if(parent == null) parsedHTML.children.push(element);
+                        else parent.appendChild(element);
+
+                        //get next sibling
+                        var sibinc = 1;
+                        if(index + 1 < nodes.length)
+                            sibinc = sibinc + getTagsHelper(nodes.slice(index + 1), parent, inc++);
+
+                        return sibinc + childinc;
 
                     }
-                        var element = doc.createElement(name);
-
-                        var attrs = []
-                        self.getAttributesFromTag(currentChild, element);
-
-                        //check if this is tag has an end tag.
-                        if(index >= nodes.length){
-                            if(parent == null) parsedHTML.children.push(element);
-                            else parent.appendChild(element);
-
-                            getTagsHelper(nodes.slice(1), parent);
-                        }else{
-                            //get children if there are any
-                            var cNodes = nodes.slice(1, index);
-                            if(cNodes.length > 0)getTagsHelper(cNodes, element);
-
-                            if(parent == null) parsedHTML.children.push(element);
-                            else parent.appendChild(element);
-
-                            //get next sibling
-                            if(index + 1 < nodes.length)
-                                getTagsHelper(nodes.slice(index + 1), parent);
-                        }
-                    //}
                 })(allNodes, null);
-
             })(htmlString, parsedHTML.childNodes, parsedHTML.children, null, null);
 
             return parsedHTML;
