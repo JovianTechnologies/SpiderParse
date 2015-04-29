@@ -15,7 +15,7 @@
             b = SpiderParse.parse(htmlstring);
         });
         JSLitmus.test("JQuery parseHTML",function(){
-            b = $.parseHTML("<div><div><p><body><html>");
+            b = $.parseHTML(htmlstring);
         });
         JSLitmus.test("DOMParser",function(){
             parser.parseFromString(htmlstring,"text/html");

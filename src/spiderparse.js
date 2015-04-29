@@ -2,10 +2,9 @@
     window.SpiderParse = {
         parse: function(htmlString){
             var self = this;
-
             var parsedHTML = { children:[], childNodes:[] };
             var doc = document.implementation.createHTMLDocument("");
-            (function getTags(htmlString, childNodes, children, parent, previousSibling){
+            (function getTags(htmlString){
                 var getAllNodesRegex = /(<[^<>]*)|((?!><)(>[^<>]*))/g;
                 var allNodes = htmlString.match(getAllNodesRegex);
 
@@ -13,30 +12,13 @@
                     var currentChild = nodes[0];
                     var isTextNode = currentChild.charAt(0) == ">";
 
-                    var index = 1;
-                    var closeTagCounter =  1;
+                    var name;
                     if(!isTextNode) {
-                        nameEndIndex = currentChild.search(/\s/);
+                        var nameEndIndex = currentChild.search(/\s/);
                         name  = nameEndIndex < 0 ? currentChild.substring(1):currentChild.substring(1, nameEndIndex);
-
-                        //find end tag for this element
-                        while (closeTagCounter > 0) {
-                            if (index >= nodes.length)break;
-
-                            if (nodes[index].indexOf("<" + name) >= 0)
-                                closeTagCounter++;
-                            else if (nodes[index].indexOf("</" + name) >= 0)
-                                closeTagCounter--;
-
-                            if (closeTagCounter == 0) break;
-
-                            index++;
-                        }
                     }
 
                     var element;
-                    var nameEndIndex;
-                    var name;
                     if(isTextNode)
                         element = doc.createTextNode(currentChild.substring(1));
                     else{
@@ -45,32 +27,36 @@
                     }
 
                     //check if this is tag has an end tag.
-                    if(index >= nodes.length || isTextNode){
+                    if(isTextNode){
                         if(parent == null) parsedHTML.children.push(element);
                         else parent.appendChild(element);
 
-                        var nextNodes = nodes.slice(1, nodes.length);
-                        if(nextNodes.length > 0)
-                            getTagsHelper(nextNodes, parent);
+                        var nextNodes = nodes.slice(1);
+
+                        var sibinc = 1;
+                         if(nextNodes.length > 0 && nextNodes[0].indexOf("</") != 0)sibinc = sibinc + getTagsHelper(nextNodes, parent);
+
+                        return sibinc;
 
                     }else{
                         //get children if there are any
-                        var cNodes = nodes.slice(1, index);
+                        var cNodes = nodes.slice(1);
                         var childinc = 1;
-                        if(cNodes.length > 0)childinc = childinc + getTagsHelper(cNodes, element, inc++);
+                        if(cNodes[0].indexOf("</") != 0)childinc = childinc + getTagsHelper(cNodes, element, inc++);
+
                         if(parent == null) parsedHTML.children.push(element);
                         else parent.appendChild(element);
 
                         //get next sibling
                         var sibinc = 1;
-                        if(index + 1 < nodes.length)
-                            sibinc = sibinc + getTagsHelper(nodes.slice(index + 1), parent, inc++);
+                        var nextSib = nodes.slice(sibinc + childinc);
+                        if(nextSib.length > 0 && nextSib[0].indexOf("</") != 0)
+                            sibinc = sibinc + getTagsHelper(nextSib, parent, inc++);
 
                         return sibinc + childinc;
-
                     }
                 })(allNodes, null);
-            })(htmlString, parsedHTML.childNodes, parsedHTML.children, null, null);
+            })(htmlString);
 
             return parsedHTML;
         },
